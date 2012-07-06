@@ -93,6 +93,52 @@
 #'	}
 #'	return(results)
 #'}
+#'library(marked)
+#'do.js.compare=function(Phi,p,num.cohorts,cohort.sizes,reps,...)
+#'#
+#'#  do.js.compare -  a simple example piece of code to show simulation/analysis loop
+#'#                   with a JS model and analysis by RMark/MARK and marked
+#'#
+#'#  Arguments:
+#'#
+#'#  Phi          parameter list for Phi
+#'#  p            parameter list for p
+#'#  num.cohorts  number of cohorts
+#'#  cohort.sizes size or sizes of cohorts
+#'#  reps         number of simulation reps
+#'#  ...          additional optional arguments passed to mark
+#'#
+#'#
+#'#  Value:
+#'#
+#'#  results - for this simple example it will be a matrix of the beta parameter estimates and
+#'#	         a matrix of the standard errors
+#'#
+#'#  Functions used: simcjs, mark
+#'#
+#'#
+#'{
+#'	results=NULL
+#'	results.se=NULL
+#'	crmresults=NULL
+#'	crmresults.se=NULL
+#'	for(i in 1:reps)
+#'	{
+#'		cat("rep ",i,"\n")
+#'		xx=simpopan(num.cohorts,cohort.sizes=cohort.sizes,Phi=Phi,p=p)
+#'		mod<-mark(xx,model="POPAN",output=FALSE,...)
+#'		results=rbind(results,mod$results$beta$estimate)
+#'		results.se=rbind(results.se,mod$results$beta$se)
+#'		mod<-crm(xx,model="js",hessian=TRUE)
+#'		crmresults=rbind(crmresults,mod$beta)
+#'		crmresults.se=rbind(crmresults.se, sqrt(diag(mod$vcv)))
+#'		gc()
+#'	}
+#'	return(list(mark=list(beta=results,se=results.se),crm=list(beta=crmresults,se=crmresults.se)))
+#'}
+#'xx=do.js.compare(.9,.4,7,100,25)
+#'summary(xx$mark$beta-xx$crm$beta)
+#'summary(xx$mark$se-xx$crm$se)
 simpopan <- function(num.cohorts=1,Nstar=NULL,cohort.sizes=NULL,Phi=list(),p=list(),pent=list(),design.data=NULL,outfile=NULL)
 {
 #
