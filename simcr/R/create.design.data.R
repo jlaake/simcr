@@ -3,7 +3,7 @@
 #' Creates a dataframe that can be used with formulae to specify models for parameters in a c-r simulation experiment. 
 #' 
 #' A c-r data set is composed of individuals  which can be either caught or not caught on a series of occasions through time.  Each individual
-#' is part of a cohort defined by the time of intial capture (or release).  Animals are assumed to age by
+#' is part of a cohort defined by the time of initial capture (or release).  Animals are assumed to age by
 #' 1 unit in the interval between each capture occasion from their initial age at first capture/release.
 #' If the length of initial.age =1, all animals assumed to be caught at same initial age (eg pups).  If it
 #' matches length of cohorts, each cohort can have a different initial age and if it matches number of animals
@@ -30,7 +30,7 @@
 #' @export create.design.data
 #' @author Jeff Laake <jeff.laake@@noaa.gov>
 #' 
-create.design.data <- function(num.cohorts,cohort.sizes,initial.age=NULL)
+create.design.data <- function(num.cohorts,cohort.sizes,initial.age=NULL,num.occ=NULL)
 {
 #       
 # Setup cohorts and cohort sizes
@@ -40,6 +40,10 @@ create.design.data <- function(num.cohorts,cohort.sizes,initial.age=NULL)
 	else
 	if(num.cohorts !=length(cohort.sizes))
 		stop("Number of cohorts doesn't match vector of cohort sizes\n")
+	if(is.null(num.occ))
+		num.occ=num.cohorts
+	else
+	   if(num.occ<num.cohorts)stop("num.occ cannot be less than num.cohorts")
 #
 # Setup initial ages if not null
 #
@@ -63,19 +67,19 @@ create.design.data <- function(num.cohorts,cohort.sizes,initial.age=NULL)
 	ddl=NULL
 	for (i in 1:num.cohorts)
 	{
-		time=as.vector(apply(as.matrix((1+i-1):num.cohorts),1,FUN=function(x,size) {return(rep(x,size))},size=cohort.sizes[i]))
+		time=as.vector(apply(as.matrix((1+i-1):num.occ),1,FUN=function(x,size) {return(rep(x,size))},size=cohort.sizes[i]))
 #
 # Only include age if initial.age is not null
 #
 		if(is.null(initial.age))
-			ddl=rbind(ddl,data.frame(id=rep((sum(cohort.sizes[1:i])-cohort.sizes[i]+1):sum(cohort.sizes[1:i]),(num.cohorts-i+1)), cohort=rep(i, cohort.sizes[i]*(num.cohorts-i+1)), 
+			ddl=rbind(ddl,data.frame(id=rep((sum(cohort.sizes[1:i])-cohort.sizes[i]+1):sum(cohort.sizes[1:i]),(num.occ-i+1)), cohort=rep(i, cohort.sizes[i]*(num.occ-i+1)), 
 							time=time))
 		else
 		if(!age.diff)
-			ddl=rbind(ddl,data.frame(id=rep((sum(cohort.sizes[1:i])-cohort.sizes[i]+1):sum(cohort.sizes[1:i]),(num.cohorts-i+1)), cohort=rep(i, cohort.sizes[i]*(num.cohorts-i+1)), 
+			ddl=rbind(ddl,data.frame(id=rep((sum(cohort.sizes[1:i])-cohort.sizes[i]+1):sum(cohort.sizes[1:i]),(num.occ-i+1)), cohort=rep(i, cohort.sizes[i]*(num.occ-i+1)), 
 							time=time,age=initial.age[i]+time-i))
 		else
-			ddl=rbind(ddl,data.frame(id=rep((sum(cohort.sizes[1:i])-cohort.sizes[i]+1):sum(cohort.sizes[1:i]),(num.cohorts-i+1)), cohort=rep(i, cohort.sizes[i]*(num.cohorts-i+1)), 
+			ddl=rbind(ddl,data.frame(id=rep((sum(cohort.sizes[1:i])-cohort.sizes[i]+1):sum(cohort.sizes[1:i]),(num.occ-i+1)), cohort=rep(i, cohort.sizes[i]*(num.occ-i+1)), 
 							time=time,age=initial.age[(sum(cohort.sizes[1:i])-cohort.sizes[i]+1):sum(cohort.sizes[1:i])]+time-i))
 	}
 	row.names(ddl)=1:dim(ddl)[1]
@@ -83,7 +87,7 @@ create.design.data <- function(num.cohorts,cohort.sizes,initial.age=NULL)
 }
 create.parmat <- function(x,nocc,N)
 #
-# create.parmat   - used in simcjs, simbarker and simburnham to setup a matrix of parameter
+# create.parmat   - used in sim code to setup a matrix of parameter
 #                   values with rows corresponding to simulated animals and columns
 #                   are for each occasion
 #

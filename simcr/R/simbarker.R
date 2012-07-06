@@ -28,7 +28,7 @@
 #' @param s a list defining the survival model with the following elements (see details)
 #'                    par      - a vector of parameter values
 #'                    formula  - a formula to use with design.data to construct model
-#'                    link     - link function used with model to create probabilites
+#'                    link     - link function used with model to create probabilites (not used at present)
 #' @param p a list defining the capture probability model (same structure as s)
 #' @param r a list defining the recovery probability model (same structure as s)
 #' @param R a list defining the resight probability model for survivors (same structure as s)

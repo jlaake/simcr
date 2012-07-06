@@ -2,13 +2,14 @@
 \alias{simcjs}
 \title{Simulates data from CJS model}
 \usage{
-  simcjs(num.cohorts, cohort.sizes, Phi = list(),
+  simcjs(num.cohorts = 1, cohort.sizes, Phi = list(),
     p = list(), design.data = NULL, outfile = NULL)
 }
 \arguments{
   \item{num.cohorts}{number of cohorts; design is square
   with same number of c-r eventsas num.cohorts; number of
-  recapture events is num.cohorts-1}
+  recapture events is num.cohorts-1; it does not return ch
+  values for last release cohort}
 
   \item{cohort.sizes}{a scalar giving constant size of each
   cohort or a vector of sizes of length num.cohorts}
@@ -17,7 +18,7 @@
   following elements (see details) par - a vector of
   parameter values formula - a formula to use with
   design.data to construct model link - link function used
-  with model to create probabilites}
+  with model to create probabilites (not used at present)}
 
   \item{p}{a list defining the capture probability model
   (same structure as Phi)}
@@ -144,6 +145,8 @@ do.cjscov <-	function(Phi,p,reps)
 		ddi=create.design.data(3,500,0)
 		ddi=merge(cov,ddi,by="id",sort=FALSE)
 		xx=simcjs(3,500,Phi=list(par=Phi,formula=~cov),p=p,design.data=ddi)
+#    There are only 1000, because the last cohort is not included because it contains
+#    no information
 		xx$cov=cov$cov[1:1000]
 		mod<-mark(xx,title="sim test",parameters=list(Phi=list(formula=~cov),p=list(formula=~1)),output=FALSE)
 		results.real=rbind(results.real,mod$results$real$estimate)

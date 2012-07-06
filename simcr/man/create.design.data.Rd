@@ -3,7 +3,7 @@
 \title{Create design data for simulation}
 \usage{
   create.design.data(num.cohorts, cohort.sizes,
-    initial.age = NULL)
+    initial.age = NULL, num.occ = NULL)
 }
 \arguments{
   \item{num.cohorts}{number of cohorts}
@@ -27,7 +27,7 @@
   A c-r data set is composed of individuals which can be
   either caught or not caught on a series of occasions
   through time.  Each individual is part of a cohort
-  defined by the time of intial capture (or release).
+  defined by the time of initial capture (or release).
   Animals are assumed to age by 1 unit in the interval
   between each capture occasion from their initial age at
   first capture/release. If the length of initial.age =1,

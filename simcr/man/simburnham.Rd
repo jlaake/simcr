@@ -18,7 +18,7 @@
   following elements (see details) par - a vector of
   parameter values formula - a formula to use with
   design.data to construct model link - link function used
-  with model to create probabilites}
+  with model to create probabilites (not used at present)}
 
   \item{p}{a list defining the capture probability model
   (same structure as s)}

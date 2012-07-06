@@ -1,12 +1,28 @@
-#' Simulates data from CJS model 
+#' Simulates data from POPAN model 
 #'
-#' Simulates capture-recapture data from CJS model of releases of multiple cohorts.
-#' Allows general model for Phi and p or constant or time-specific model depending on input arguments Phi and p.
+#' Simulates capture-recapture data from POPAN model with multiple cohorts from a super-population with
+#' defined entry into the population.
+#' 
+#' Allows general model for Phi,p, pent or constant or time-specific model depending on input arguments Phi,p,pent.
 #' Optionally outputs file to outfile with .inp extension for input to program MARK.
+#' The entry of individuals into the population can be specified in several ways:
+#' 1) design.data contains cohort specification for each individual which is the occasion that it
+#' entered but not the first time it was seen. This allows any specification of entry into the 
+#' population because it is done outside of the this code.
+#' 2) cohort.sizes are specified which are the number that enter for each cohort; can differ across cohorts. For
+#' example, cohort.sizes=rmultinom(1,500,prob=c(.1,.3,.2,.3,.1))
+#' 3) Nstar is specifed and pent is specified as a vector; #2 can be also done
+#' as Nstar=500,pent=c(.1,.3,.2,.3,.1)
+#' 4) Nstar and a formula for pent is specified; if no design.data are specified then default
+#' values are created with cohort=1; after generating an entry time for each animal the
+#' a cohort value is assigned to the design.data.  If design.data are specified, all cohort values
+#' should be 1 and the code will assign it from random entry as specified by formula.
+#' The pent parameters are computed using the mlogit transformation from the specified beta
+#' parameters and formula.
 #' 
 #' The design.data dataframe contains a record for each animal for each time period it is contained in the study.  The default
 #' fieldnames are id(unique # in cohort), cohort (cohort number from 1:num.cohorts), time (i:num.cohorts,
-#' where i is cohort #) and age (assumed to increment by 1 each occasion and defaults with 0 initial age)
+#' where i is cohort # or all 1) and age (assumed to increment by 1 each occasion and defaults with 0 initial age)
 #' The function create.design.data can be used to create an initial dataframe which can be supplemented 
 #' with other covariates. If a formula is given but no design.data is not provided this function
 #' calls create.design.data to construct a default dataframe for the specified problem.
@@ -29,38 +45,41 @@
 #' time of occasion.  Since these are truly recapture probabilities it starts with occasion 2, so
 #' p=list(par=c(1,0.3),formula=~time) would give values: p2=0.832, p3=0.870
 #
-#' @param num.cohorts  number of cohorts; design is square with same number of c-r eventsas num.cohorts; number of recapture events is num.cohorts-1; it does not return ch values for last release cohort
+#' @param num.cohorts  number of cohorts; design is square with same number of c-r events as num.cohorts; number of recapture events is num.cohorts-1
 #' @param cohort.sizes a scalar giving constant size of each cohort or a vector of sizes of length num.cohorts
+#' @param Nstar a scalar giving super population size; only needed if cohort.sizes, design.data with cohort field, or pent=vector are not specified
 #' @param Phi a list defining the survival model with the following elements (see details)
 #'                    par      - a vector of parameter values
 #'                    formula  - a formula to use with design.data to construct model
 #'                    link     - link function used with model to create probabilites (not used at present)
 #' @param p a list defining the capture probability model (same structure as Phi)
+#' @param pent a list defining the entry probability model (same structure as Phi)
 #' @param design.data a dataframe with design data that allows model construction for probabilities (see details).
 #' @param outfile prefix name of the output file for the ch data. extension .inp is always added for MARK
-#' @export simcjs
+#' @export simpopan
 #' @author Jeff Laake <jeff.laake@@noaa.gov>
 #' @return dataframe with ch (capture history) as character
 #' @examples 
 #' library(RMark)
-#' do.cjs <- function(Phi,p,reps,...)
+#' do.popan <- function(Phi,p,cohort.sizes,reps,...)
 #'#
-#'#  do.cjs -  a simple example piece of code to show simulation/analysis loop
-#'#            with a CJS model
+#'#  do.popan -  a simple example piece of code to show simulation/analysis loop
+#'#              with a POPAN model
 #'#
 #'#  Arguments:
 #'#
-#'#  Phi -  parameter list for Phi
-#'#  p   -  parameter list for p
-#'#  reps-  number of simulation reps
-#'#  ... -  arguments passed to mark 
+#'#  Phi          -  parameter list for Phi
+#'#  p            -  parameter list for p
+#'#  cohort.sizes -  fixed entry cohort.sizes
+#'#  reps         -  number of simulation reps
+#'#  ...          -  arguments passed to mark 
 #'#
 #'#
 #'#  Value:
 #'# 
 #'#  results - for this simple example it will be a matrix of the real parameter estimates
 #'#
-#'#  Functions used: simcjs, mark
+#'#  Functions used: simpopan, mark
 #'#
 #'#
 #'{
@@ -68,98 +87,13 @@
 #'	for(i in 1:reps)
 #'	{
 #'		cat("rep ",i,"\n")
-#'		xx=simcjs(3,500,Phi=Phi,p=p)
-#'		mod<-mark(xx,title="sim test",output=FALSE,...)
+#'		xx=simpopan(length(cohort.sizes),cohort.sizes,Phi=Phi,p=p,pent=NULL)
+#'		mod<-mark(xx,model="POPAN",title="sim test",output=FALSE,...)
 #'		results=rbind(results,mod$results$real$estimate)
 #'	}
 #'	return(results)
 #'}
-#' do.cjscov <-	function(Phi,p,reps)
-#'#
-#'#  do.cjscov -  a simple example piece of code to show simulation/analysis loop
-#'#               with a CJS model including a single covariate
-#'#
-#'#  Arguments:
-#'#
-#'#  Phi -  parameter list for Phi
-#'#  p   -  parameter list for p
-#'#  reps-  number of simulation reps
-#'#
-#'#
-#'#  Value:
-#'# 
-#'#  results - for this simple example it will be a list with 2 elements: a matrix of the real parameter estimates
-#'#            and a matrix of beta estimates
-#'#
-#'#  Functions used: create.design.data, simcjs, mark
-#'#
-#'#
-#'{
-#'	results.real=NULL
-#'	results.beta=NULL
-#'	for(i in 1:reps)
-#'	{
-#'		cat("rep ",i,"\n")
-#'		cov=data.frame(id=1:1500,cov=rnorm(1500,0,1))
-#'		ddi=create.design.data(3,500,0)
-#'		ddi=merge(cov,ddi,by="id",sort=FALSE)
-#'		xx=simcjs(3,500,Phi=list(par=Phi,formula=~cov),p=p,design.data=ddi)
-#' #    There are only 1000, because the last cohort is not included because it contains
-#' #    no information
-#'		xx$cov=cov$cov[1:1000]
-#'		mod<-mark(xx,title="sim test",parameters=list(Phi=list(formula=~cov),p=list(formula=~1)),output=FALSE)
-#'		results.real=rbind(results.real,mod$results$real$estimate)
-#'		results.beta=rbind(results.beta,mod$results$beta$estimate)
-#'	}
-#'	return(list(real=results.real,beta=results.beta))
-#'}
-#'
-#' library(marked)
-#'do.cjs.compare=function(Phi,p,num.cohorts,cohort.sizes,reps,...)
-#'#
-#'#  do.cjs.compare -  a simple example piece of code to show simulation/analysis loop
-#'#            with a CJS model using crm and RMark
-#'#
-#'#  Arguments:
-#'#
-#'#  Phi          parameter list for Phi
-#'#  p            parameter list for p
-#'#  num.cohorts  number of cohorts
-#'#  cohort.sizes size or sizes of cohorts
-#'#  reps         number of simulation reps
-#'#  ...          additional optional arguments passed to mark
-#'#
-#'#
-#'#  Value:
-#'#
-#'#  results - for this simple example it will be a matrix of the beta parameter estimates and
-#'#	         a matrix of the standard errors
-#'#
-#'#  Functions used: simcjs, mark
-#'#
-#'#
-#'{
-#'	results=NULL
-#'	results.se=NULL
-#'	crmresults=NULL
-#'	crmresults.se=NULL
-#'	for(i in 1:reps)
-#'	{
-#'		cat("rep ",i,"\n")
-#'		xx=simcjs(num.cohorts,cohort.sizes,Phi=Phi,p=p)
-#'		mod<-mark(xx,title="sim test",output=FALSE,...)
-#'		results=rbind(results,mod$results$beta$estimate)
-#'		results.se=rbind(results.se,mod$results$beta$se)
-#'		mod<-crm(xx,hessian=TRUE)
-#'		crmresults=rbind(crmresults,mod$beta)
-#'		crmresults.se=rbind(crmresults.se, sqrt(diag(mod$vcv)))
-#'		gc()
-#'	}
-#'	return(list(mark=list(beta=results,se=results.se),crm=list(beta=crmresults,se=crmresults.se)))
-#'}
-#'xx=do.cjs.compare(.9,.4,7,100,reps=25)
-#' 
-simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NULL,outfile=NULL)
+simpopan <- function(num.cohorts=1,Nstar=NULL,cohort.sizes=NULL,Phi=list(),p=list(),pent=list(),design.data=NULL,outfile=NULL)
 {
 #
 # Setup default values for link and allow simple parameter vectors
@@ -171,29 +105,70 @@ simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NU
 	if(is.null(Phi$link))Phi$link="logit"
 	if(is.null(p$link))p$link="logit"
 #
-# Check to make sure that Phi$par and p$par are defined
+# Check to make sure that Phi$par, p$par are defined 
 #
 	if(is.null(Phi$par)) stop("Survival parameters are missing\n")
 	if(is.null(p$par)) stop("Capture  parameters are missing\n")
 #       
-# Setup cohorts and cohort sizes
+# Setup cohorts and cohort sizes; if no cohort.sizes provided then generate cohorts from pent parameters and Nstar 
+# and create design data if needed and not provided
 #
-	ch=NULL
-	if(num.cohorts>1 & length(cohort.sizes)==1)
-		cohort.sizes=rep(cohort.sizes,num.cohorts)
-	else
-		if(is.missing(cohort.sizes))
-			stop("\ncohort.sizes was not specified\n")
-	    else
-			if(num.cohorts !=length(cohort.sizes))
-		        stop("\nNumber of cohorts doesn't match vector of cohort sizes\n")
+    if(is.null(Nstar)&is.null(cohort.sizes))
+		if(!is.null(design.data$cohort))
+	    {
+		   cohort.sizes=table(design.data$cohort)
+	 	   num.cohorts=max(design.data$cohort)
+	    }else
+		{
+			if(!is.list(pent))
+			{
+				num.cohorts=length(pent)
+				cohort.sizes=rmultinom(1,Nstar,pent)
+			}
+		}
+#   No cohort sizes specified, so they must be generated based on pent
+	if(is.null(cohort.sizes))
+	{
+		pent$link="mlogit"
+		if(is.null(Nstar))
+			stop("Nstar must be specified if cohort.sizes or design.data are not specified\n")
+		if(is.null(design.data))
+		{
+			if(!is.null(Phi$formula) | !is.null(p$formula) | !is.null(pent$formula))
+			{
+				design.data=gencohorts(num.cohorts,pent,Nstar=Nstar,design.data=NULL,create=TRUE)
+				cohort.sizes=table(design.data$cohort)
+			}else
+	            cohort.sizes=gencohorts(num.cohorts,pent,Nstar=Nstar,design.data=NULL,create=FALSE)
+		}else
+		{
+			if(!is.null(design.data$cohort) && !all(design.data$cohort==1))stop("\ncohort values in design.data differ; cannot have any cohort structure in design.data\n")
+			if(Nstar!=nrow(design.data))stop("\nInconsistent value of Nstar and number of rows in the design data\n")
+			design.data=gencohorts(num.cohorts,pent,Nstar=Nstar,design.data=design.data,create=TRUE)
+			cohort.sizes=table(design.data$cohort)
+		}
+	}else
+#   Cohort sizes specified, check for consistency and generate design data if not provided
+	{
+		if(length(pent)!=0)
+			cat("\nNote: pent values ignored because fixed cohort.sizes were specified\n")
+		if(num.cohorts>1 & length(cohort.sizes)==1)
+			cohort.sizes=rep(cohort.sizes,num.cohorts)
+		if(num.cohorts !=length(cohort.sizes))
+			stop("Number of cohorts doesn't match vector of cohort sizes\n")
+		if(is.null(design.data))
+		{
+			if(!is.null(Phi$formula) | !is.null(p$formula)) 
+			   design.data=create.design.data(num.cohorts,cohort.sizes,initial.age=0)
+	    } else
+		{
+		    if(any(cohort.sizes!=table(design.data$cohort)))stop("\nInconsistencies between specified cohort.sizes and cohort in design.data\n")	
+		}		
+	}			
 #
 # Check if p,s are using formula and then make sure design.data exists;
 # if it doesn't exist create default design data
 #
-	if(!is.null(Phi$formula) | !is.null(p$formula))
-		if(is.null(design.data))
-			design.data=create.design.data(num.cohorts,cohort.sizes,initial.age=0)
 #
 # Set up survival parameters
 #
@@ -229,10 +204,10 @@ simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NU
 		if(length(p$par)==1)
 			pconstant=TRUE
 		else
-		if(length(p$par)==(num.cohorts-1))
+		if(length(p$par)==num.cohorts)
 			pconstant=FALSE
 		else
-			stop("Incorrect number of capture parameters; doesn't match number of occasions-1\n")
+			stop("Incorrect number of capture parameters; doesn't match number of occasions\n")
 		if(p$link=="identity")   
 			p=p$par
 		else
@@ -246,10 +221,12 @@ simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NU
 		if(dim(pmat)[2]!=length(p$par))
 			stop(paste("Dimension of model matrix",dim(pmat)[2],"is not consistent with length of capture parameter vector",length(p$par),"\n"))
 	}
+    
 #
 # Loop over cohorts and generate simulated data for each cohort
 #
-	for (i in 1:(num.cohorts-1))
+    ch=NULL
+	for (i in 1:num.cohorts)
 	{
 #
 #  Setup cohort specific survival parameters
@@ -276,17 +253,17 @@ simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NU
 		if(!pformula)
 		{
 			if(!pconstant)
-				pvalues=p[i:(num.cohorts-1)]       
+				pvalues=p[i:num.cohorts]       
 			else
 				pvalues=p
 		}
 		else
 		{
-			pvalues=pmat[design.data$cohort[design.data$time>design.data$cohort&design.data$cohort<num.cohorts]==i,] %*% p$par
+			pvalues=pmat[design.data$cohort[design.data$time>=design.data$cohort]==i,] %*% p$par
 			pvalues=exp(pvalues)/(1+exp(pvalues))
-			select=design.data$cohort==i&design.data$time>i
+			select=design.data$cohort==i&design.data$time>=i
 			pvalues=tapply(as.vector(pvalues),list(as.factor(design.data$id[select]),as.factor(design.data$time[select])),sum)
-			if(dim(pvalues)[1]!=cohort.sizes[i]) 
+			if(nrow(pvalues)!=cohort.sizes[i]) 
 				stop("Number of rows in p model matrix not consistent with number in cohort\n")
 		}
 #
@@ -294,8 +271,12 @@ simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NU
 #  not the first cohort, the appropriate number of 0's are used as prefix to the
 #  cohort capture history.
 #
-		ch=c(ch,paste(rep(paste(rep("0",i-1),collapse=""),cohort.sizes[i]),simcjs.cohort(cohort.sizes[i],svalues,pvalues,num.cohorts-i+1),sep=""))   
+		ch=c(ch,paste(rep(paste(rep("0",i-1),collapse=""),cohort.sizes[i]),simpopan.cohort(cohort.sizes[i],svalues,pvalues,num.cohorts-i+1),sep=""))   
 	}
+#
+#  Remove any ch that are all 0s
+#
+   ch=ch[ch!=paste(rep("0",num.cohorts),collapse="")]
 #
 #  If a filename specified output ch to file for input to MARK
 #
@@ -306,7 +287,61 @@ simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NU
 #
 	return(data=data.frame(ch=I(ch)))
 }
-simcjs.cohort <-
+gencohorts=function(num.cohorts,Nstar,pent,design.data=NULL,create=TRUE)
+{
+#
+# Set up pent parameters
+#
+if(is.null(pent$formula))
+{
+	pentformula=FALSE
+	if(length(pent$par)==1)
+		pentconstant=TRUE
+	else
+	if(length(pent$par)==(num.cohorts-1))
+		pentconstant=FALSE
+	else
+		stop("Incorrect number of pent parameters; doesn't match number of occasions-1\n")
+	pent=exp(pent$par)/(1+sum(exp(pent$par)))
+	pent=c(1-sum(pent),pent)
+	cohort.sizes=rmultinom(1, size=Nstar, pent)
+	if(!is.null(design.data))
+		design.data$cohort=rep(1:num.cohorts,times=cohort.sizes)
+	else
+		if(create)
+		{
+			design.data=create.design.data(num.cohorts=1,cohort.sizes,initial.age=0,num.occ=num.cohorts)
+			design.data$cohort=rep(1:num.cohorts,times=cohort.sizes)
+		}
+}
+else
+{
+	if(pent$link!="mlogit")cat("Note: mlogit link will be used with formula\n")
+	pentformula=TRUE
+	if(is.null(design.data))design.data=create.design.data(num.cohorts=1,cohort.sizes=Nstar,initial.age=0,num.occ=num.cohorts)
+	design.data=design.data[order(design.data$id,design.data$time),]
+	pentmat=model.matrix(pent$formula,design.data[design.data$time>1,,drop=FALSE])
+	if(ncol(pentmat)!=length(pent$par))
+		stop(paste("Dimension of model matrix",ncol(pentmat),"is not consistent with length of pent parameter vector",length(pent$par),"\n"))
+	pentmat=matrix(exp(pentmat%*%pent$par),ncol=num.cohorts-1,byrow=TRUE)
+	pentmat=cbind(rep(1,nrow(pentmat)),pentmat)
+	pentmat=pentmat/rowSums(pentmat)
+	inpop=apply(pentmat,1,function(x) rmultinom(1,1,prob=x))
+	design.data$cohort=apply(inpop,2,function(x) {
+				                                    z=(1:num.cohorts)*x
+				                                    return(min(z[z>0]))
+												 })
+	cohort.sizes=table(design.data$cohort)
+}
+#
+# Return either cohort.sizes or design.data depending on arguments
+#
+   if(is.null(design.data))
+	   return(cohort.sizes)
+   else
+       return(design.data)	   
+}
+simpopan.cohort <-
 		function(N,Phi,p,nocc)
 #
 # simcjs.cohort - simulates capture histories for a single cohort of N release animals 
@@ -333,20 +368,25 @@ simcjs.cohort <-
 # general specification.  In each case it is transformed to a matrix.
 #
 	Phi=create.parmat(Phi,nocc,N)
-	p=create.parmat(p,nocc,N)
+	p=create.parmat(p,nocc+1,N)
 #
 # alive is matrix of who is alive (row=id, col=occasion) 
 #
-   alive=matrix(rbinom(N*(nocc-1),1,Phi),nrow=N,ncol=nocc-1)
-   if(nocc>2) alive=t(apply(alive,1,cumprod))
-#
+   if(nocc!=1)
+   {
+	   alive=matrix(rbinom(N*(nocc-1),1,Phi),nrow=N,ncol=nocc-1)
+	   if(nocc>2) alive=t(apply(alive,1,cumprod))
+	   alive=cbind(rep(1,nrow(alive)),alive)
+   } else
+	   alive=1   
+   #
 #  Generate Bernoulli rv for seen
 #
-   seen=matrix(rbinom(N*(nocc-1),1,p),nrow=N,ncol=nocc-1)
+   seen=matrix(rbinom(N*nocc,1,p),nrow=N,ncol=nocc)
 #
 #  Create capture history 
 #
-   ch=apply(cbind(rep("1",N),alive*seen),1,paste,collapse="")
+   ch=apply(cbind(alive*seen),1,paste,collapse="")
 #
 #    Return a vector of capture histories with a 1 ; appended for input to MARK;
 #    Vector can be written to file with command
