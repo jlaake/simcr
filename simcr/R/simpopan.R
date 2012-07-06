@@ -159,7 +159,7 @@ simpopan <- function(num.cohorts=1,Nstar=NULL,cohort.sizes=NULL,Phi=list(),p=lis
 		if(is.null(design.data))
 		{
 			if(!is.null(Phi$formula) | !is.null(p$formula)) 
-			   design.data=create.design.data(num.cohorts,cohort.sizes,initial.age=0)
+			   design.data=create.simdesign.data(num.cohorts,cohort.sizes,initial.age=0)
 	    } else
 		{
 		    if(any(cohort.sizes!=table(design.data$cohort)))stop("\nInconsistencies between specified cohort.sizes and cohort in design.data\n")	
@@ -310,7 +310,7 @@ if(is.null(pent$formula))
 	else
 		if(create)
 		{
-			design.data=create.design.data(num.cohorts=1,cohort.sizes,initial.age=0,num.occ=num.cohorts)
+			design.data=create.simdesign.data(num.cohorts=1,cohort.sizes,initial.age=0,num.occ=num.cohorts)
 			design.data$cohort=rep(1:num.cohorts,times=cohort.sizes)
 		}
 }
@@ -318,7 +318,7 @@ else
 {
 	if(pent$link!="mlogit")cat("Note: mlogit link will be used with formula\n")
 	pentformula=TRUE
-	if(is.null(design.data))design.data=create.design.data(num.cohorts=1,cohort.sizes=Nstar,initial.age=0,num.occ=num.cohorts)
+	if(is.null(design.data))design.data=create.simdesign.data(num.cohorts=1,cohort.sizes=Nstar,initial.age=0,num.occ=num.cohorts)
 	design.data=design.data[order(design.data$id,design.data$time),]
 	pentmat=model.matrix(pent$formula,design.data[design.data$time>1,,drop=FALSE])
 	if(ncol(pentmat)!=length(pent$par))

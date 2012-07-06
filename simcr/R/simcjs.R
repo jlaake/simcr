@@ -7,9 +7,9 @@
 #' The design.data dataframe contains a record for each animal for each time period it is contained in the study.  The default
 #' fieldnames are id(unique # in cohort), cohort (cohort number from 1:num.cohorts), time (i:num.cohorts,
 #' where i is cohort #) and age (assumed to increment by 1 each occasion and defaults with 0 initial age)
-#' The function create.design.data can be used to create an initial dataframe which can be supplemented 
+#' The function create.simdesign.data can be used to create an initial dataframe which can be supplemented 
 #' with other covariates. If a formula is given but no design.data is not provided this function
-#' calls create.design.data to construct a default dataframe for the specified problem.
+#' calls create.simdesign.data to construct a default dataframe for the specified problem.
 #'
 #' For designation of models for Phi or p, there are 3 options here:
 #'         constant model: Phi=list(par=value) 
@@ -91,7 +91,7 @@
 #'#  results - for this simple example it will be a list with 2 elements: a matrix of the real parameter estimates
 #'#            and a matrix of beta estimates
 #'#
-#'#  Functions used: create.design.data, simcjs, mark
+#'#  Functions used: create.simdesign.data, simcjs, mark
 #'#
 #'#
 #'{
@@ -101,7 +101,7 @@
 #'	{
 #'		cat("rep ",i,"\n")
 #'		cov=data.frame(id=1:1500,cov=rnorm(1500,0,1))
-#'		ddi=create.design.data(3,500,0)
+#'		ddi=create.simdesign.data(3,500,0)
 #'		ddi=merge(cov,ddi,by="id",sort=FALSE)
 #'		xx=simcjs(3,500,Phi=list(par=Phi,formula=~cov),p=p,design.data=ddi)
 #' #    There are only 1000, because the last cohort is not included because it contains
@@ -182,7 +182,7 @@ simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NU
 	if(num.cohorts>1 & length(cohort.sizes)==1)
 		cohort.sizes=rep(cohort.sizes,num.cohorts)
 	else
-		if(is.missing(cohort.sizes))
+		if(missing(cohort.sizes))
 			stop("\ncohort.sizes was not specified\n")
 	    else
 			if(num.cohorts !=length(cohort.sizes))
@@ -193,7 +193,7 @@ simcjs <- function(num.cohorts=1,cohort.sizes,Phi=list(),p=list(),design.data=NU
 #
 	if(!is.null(Phi$formula) | !is.null(p$formula))
 		if(is.null(design.data))
-			design.data=create.design.data(num.cohorts,cohort.sizes,initial.age=0)
+			design.data=create.simdesign.data(num.cohorts,cohort.sizes,initial.age=0)
 #
 # Set up survival parameters
 #

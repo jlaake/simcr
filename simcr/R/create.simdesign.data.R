@@ -26,11 +26,12 @@
 #' @param num.cohorts number of cohorts
 #' @param cohort.sizes size of each cohort; if only a single value each cohort has same size
 #' @param initial.age if specified an age field is included as defined in details
+#' @param num.occ number of occasions which must be as large as num.cohorts; most useful for num.cohorts=1; num.occ >1
 #' @return dataframe with columns id and design data fields: cohort and time and optionally age  
-#' @export create.design.data
+#' @export create.simdesign.data
 #' @author Jeff Laake <jeff.laake@@noaa.gov>
 #' 
-create.design.data <- function(num.cohorts,cohort.sizes,initial.age=NULL,num.occ=NULL)
+create.simdesign.data <- function(num.cohorts,cohort.sizes,initial.age=NULL,num.occ=NULL)
 {
 #       
 # Setup cohorts and cohort sizes
@@ -43,7 +44,7 @@ create.design.data <- function(num.cohorts,cohort.sizes,initial.age=NULL,num.occ
 	if(is.null(num.occ))
 		num.occ=num.cohorts
 	else
-	   if(num.occ<num.cohorts)stop("num.occ cannot be less than num.cohorts")
+	if(num.occ<num.cohorts)stop("num.occ cannot be less than num.cohorts")
 #
 # Setup initial ages if not null
 #
@@ -110,5 +111,7 @@ create.parmat <- function(x,nocc,N)
 	}
 	return(x)
 }
+
+
 
 

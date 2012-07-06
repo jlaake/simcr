@@ -14,7 +14,7 @@ LazyLoad: yes
 License: GPL (>=2)
 Maintainer: Jeff Laake <Jeff.Laake@noaa.gov>
 Collate:
-    'create.design.data.R'
+    'create.simdesign.data.R'
     'simbarker.R'
     'simburnham.R'
     'simcjs.R'

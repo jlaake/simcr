@@ -54,7 +54,7 @@
   (cohort number from 1:num.cohorts), time (i:num.cohorts,
   where i is cohort #) and age (assumed to increment by 1
   each occasion and defaults with 0 initial age) The
-  function create.design.data can be used to create an
+  function create.simdesign.data can be used to create an
   initial dataframe which can be supplemented with other
   covariates. If a formula is given but no design.data is
   not provided this function
@@ -65,10 +65,10 @@
   (cohort number from 1:num.cohorts), time (i:num.cohorts,
   where i is cohort #) and age (assumed to increment by 1
   each occasion and defaults with 0 initial age) The
-  function create.design.data can be used to create an
+  function create.simdesign.data can be used to create an
   initial dataframe which can be supplemented with other
   covariates. If a formula is given but no design.data is
-  not provided this function calls create.design.data to
+  not provided this function calls create.simdesign.data to
   construct a default dataframe for the specified problem.
 
   For designation of models for s or p, there are 3 options
