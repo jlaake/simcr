@@ -78,12 +78,12 @@
   (cohort number from 1:num.cohorts), time (i:num.cohorts,
   where i is cohort # or all 1) and age (assumed to
   increment by 1 each occasion and defaults with 0 initial
-  age) The function create.design.data can be used to
+  age) The function create.simdesign.data can be used to
   create an initial dataframe which can be supplemented
   with other covariates. If a formula is given but no
   design.data is not provided this function calls
-  create.design.data to construct a default dataframe for
-  the specified problem.
+  create.simdesign.data to construct a default dataframe
+  for the specified problem.
 
   For designation of models for Phi or p, there are 3
   options here: constant model: Phi=list(par=value) time
@@ -148,6 +148,52 @@ do.popan <- function(Phi,p,cohort.sizes,reps,...)
 	}
 	return(results)
 }
+library(marked)
+do.js.compare=function(Phi,p,num.cohorts,cohort.sizes,reps,...)
+#
+#  do.js.compare -  a simple example piece of code to show simulation/analysis loop
+#                   with a JS model and analysis by RMark/MARK and marked
+#
+#  Arguments:
+#
+#  Phi          parameter list for Phi
+#  p            parameter list for p
+#  num.cohorts  number of cohorts
+#  cohort.sizes size or sizes of cohorts
+#  reps         number of simulation reps
+#  ...          additional optional arguments passed to mark
+#
+#
+#  Value:
+#
+#  results - for this simple example it will be a matrix of the beta parameter estimates and
+#	         a matrix of the standard errors
+#
+#  Functions used: simcjs, mark
+#
+#
+{
+	results=NULL
+	results.se=NULL
+	crmresults=NULL
+	crmresults.se=NULL
+	for(i in 1:reps)
+	{
+		cat("rep ",i,"\\n")
+		xx=simpopan(num.cohorts,cohort.sizes=cohort.sizes,Phi=Phi,p=p)
+		mod<-mark(xx,model="POPAN",output=FALSE,...)
+		results=rbind(results,mod$results$beta$estimate)
+		results.se=rbind(results.se,mod$results$beta$se)
+		mod<-crm(xx,model="js",hessian=TRUE)
+		crmresults=rbind(crmresults,mod$beta)
+		crmresults.se=rbind(crmresults.se, sqrt(diag(mod$vcv)))
+		gc()
+	}
+	return(list(mark=list(beta=results,se=results.se),crm=list(beta=crmresults,se=crmresults.se)))
+}
+xx=do.js.compare(.9,.4,7,100,25)
+summary(xx$mark$beta-xx$crm$beta)
+summary(xx$mark$se-xx$crm$se)
 }
 \author{
   Jeff Laake <jeff.laake@noaa.gov>

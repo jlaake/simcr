@@ -1,3 +1,4 @@
+export(create.design.data)
 export(create.simdesign.data)
 export(simbarker)
 export(simburnham)
