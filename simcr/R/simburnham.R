@@ -1,4 +1,4 @@
-#' Simulates data from Barker capture-recapture model 
+#' Simulates data from Burhnam capture-recapture model 
 #'
 #' Simulates capture-recapture data from Burnham (both)  model of releases of multiple cohorts.
 #' Allows general model for s, p, r and F or constant or time-specific model
