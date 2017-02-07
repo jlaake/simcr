@@ -12,30 +12,19 @@
 #' calls create.simdesign.data to construct a default dataframe for the specified problem.
 #'
 #' For designation of models for Phi or p, there are 3 options here:
-#'         constant model: Phi=list(par=value) 
-#'         time model:     Phi=list(par=c(val1,val2,...valk)) where k=num.cohorts-1 is number of survival intervals
+#'         constant model: Phi=list(par=value) or Phi=value
+#'         time model:     Phi=list(par=c(val1,val2,...valk)) or Phi=c(val1,val2,...valk) where k=num.cohorts-1 is number of survival intervals
 #'         general model:  Phi=list(par=c(val1,val2,...valk),formula=~yourformula)) k is number of cols in model matrix
 #'
-#' For first 2, identity link is assumed but logit link can be used. For formula, logit link is 
-#' assumed and required.  The formula must match fields used in design.data.  Note that fields in 
-#' design.data are numeric and the formula must specify as.factor to create a factor variable.  For
-#' example a time model with 3 times and the same survivals in each can be specified as:
-#'
-#'         Phi=list(par=c(0.731,0.786)) or s=list(par=c(1,0.3),formula=~as.factor(time))
-#' 
-#' The above are not equivalent to Phi=list(par=c(1,0.3),formula=~time) which is 
-#' where Phi=exp(1+0.3*time)/(1+exp(1+0.3*time)), Phi1=0.786, Phi2=0.831.  Note that survivals are
-#' indexed by time at beginning of interval 1 for interal 1 to 2 and capture probabilities by
-#' time of occasion.  Since these are truly recapture probabilities it starts with occasion 2, so
-#' p=list(par=c(1,0.3),formula=~time) would give values: p2=0.832, p3=0.870
+#' See \code{\link{simpopan}} for more details.
 #
 #' @param num.cohorts  number of cohorts; design is square with same number of c-r eventsas num.cohorts; number of recapture events is num.cohorts-1; it does not return ch values for last release cohort
 #' @param cohort.sizes a scalar giving constant size of each cohort or a vector of sizes of length num.cohorts
-#' @param Phi a list defining the survival model with the following elements (see details)
+#' @param Phi a list or vector defining the survival model with the following elements (see details)
 #'                    par      - a vector of parameter values
 #'                    formula  - a formula to use with design.data to construct model
 #'                    link     - link function used with model to create probabilites (not used at present)
-#' @param p a list defining the capture probability model (same structure as Phi)
+#' @param p a list or vector defining the capture probability model (same structure as Phi)
 #' @param design.data a dataframe with design data that allows model construction for probabilities (see details).
 #' @param outfile prefix name of the output file for the ch data. extension .inp is always added for MARK
 #' @export simcjs

@@ -20,3 +20,4 @@ Collate:
     'simcjs.R'
     'simpopan.R'
     'create.design.data.R'
+RoxygenNote: 5.0.1

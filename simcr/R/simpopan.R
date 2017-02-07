@@ -32,15 +32,25 @@
 #'         time model:     Phi=list(par=c(val1,val2,...valk)) where k=num.cohorts-1 is number of survival intervals
 #'         general model:  Phi=list(par=c(val1,val2,...valk),formula=~yourformula)) k is number of cols in model matrix
 #'
-#' For first 2, identity link is assumed but logit link can be used. For formula, logit link is 
-#' assumed and required.  The formula must match fields used in design.data.  Note that fields in 
+#' If you use a list approach as above for Phi or p, a logit link is assumed. If you want to specify an identity link such that you 
+#' are specifying the real parameter values (eg. survival prob =0.5) then you can use:
+#' 
+#'         constant model: Phi=value
+#'         time model:     Phi=c(val1,val2,...valk) where k=num.cohorts-1 is number of survival intervals
+#' 
+#' The general approach with a formula always uses the logit link because it is driven by the formula which is for the logit.
+#'  The formula must match fields used in design.data.  Note that fields in 
 #' design.data are numeric and the formula must specify as.factor to create a factor variable.  For
-#' example a time model with 3 times and the same survivals in each can be specified as:
+#' example a time model with 3 occasions, the survivals can be specified as:
 #'
-#'         Phi=list(par=c(0.731,0.786)) or s=list(par=c(1,0.3),formula=~as.factor(time))
+#'         Phi=c(0.731,0.786)
+#'             or
+#'         Phi=list(par=c(1,0.3),formula=~as.factor(time))
+#' 
+#' Because plogis(1)=0.731 and plogis(1.3)=0.786
 #' 
 #' The above are not equivalent to Phi=list(par=c(1,0.3),formula=~time) which is 
-#' where Phi=exp(1+0.3*time)/(1+exp(1+0.3*time)), Phi1=0.786, Phi2=0.831.  Note that survivals are
+#' where Phi=exp(1+0.3*time)/(1+exp(1+0.3*time)), Phi1=0.786, Phi2=0.831 because time is numeric.  Note that survivals are
 #' indexed by time at beginning of interval 1 for interal 1 to 2 and capture probabilities by
 #' time of occasion.  Since these are truly recapture probabilities it starts with occasion 2, so
 #' p=list(par=c(1,0.3),formula=~time) would give values: p2=0.832, p3=0.870
@@ -48,11 +58,11 @@
 #' @param num.cohorts  number of cohorts; design is square with same number of c-r events as num.cohorts; number of recapture events is num.cohorts-1
 #' @param cohort.sizes a scalar giving constant size of each cohort or a vector of sizes of length num.cohorts
 #' @param Nstar a scalar giving super population size; only needed if cohort.sizes, design.data with cohort field, or pent=vector are not specified
-#' @param Phi a list defining the survival model with the following elements (see details)
+#' @param Phi a list or vector defining the survival model with the following elements (see details)
 #'                    par      - a vector of parameter values
 #'                    formula  - a formula to use with design.data to construct model
 #'                    link     - link function used with model to create probabilites (not used at present)
-#' @param p a list defining the capture probability model (same structure as Phi)
+#' @param p a list or vector defining the capture probability model (same structure as Phi)
 #' @param pent a list defining the entry probability model (same structure as Phi)
 #' @param design.data a dataframe with design data that allows model construction for probabilities (see details).
 #' @param outfile prefix name of the output file for the ch data. extension .inp is always added for MARK
@@ -279,8 +289,11 @@ simpopan <- function(num.cohorts=1,Nstar=NULL,cohort.sizes=NULL,Phi=list(),p=lis
 #
 		if(!sformula)
 		{
-			if(!sconstant)  
-				svalues=Phi[i:(num.cohorts-1)]
+			if(!sconstant)
+				if(i!=num.cohorts)
+				   svalues=Phi[i:(num.cohorts-1)]
+		   		else
+					svalues=1
 			else
 				svalues=Phi
 		} 

@@ -18,10 +18,10 @@
 #' calls create.simdesign.data to construct a default dataframe for the specified problem.
 #'
 #' For designation of models for s or p, there are 3 options here:
-#'         constant model: s=list(par=value) 
-#'         time model:     s=list(par=c(val1,val2,...valk)) where k=num.cohorts-1 is number of survival intervals
+#'         constant model: s=list(par=value)  or s=value
+#'         time model:     s=list(par=c(val1,val2,...valk)) or s=c(val1,val2,...valk) where k=num.cohorts-1 is number of survival intervals
 #'         general model:  s=list(par=c(val1,val2,...valk),formula=~yourformula)) k is number of cols in model matrix
-#' See \code{\link{simcjs}} for more details.
+#' See \code{\link{simpopan}} for more details.
 #' 
 #' @param num.cohorts  number of cohorts; design is square with same number of c-r eventsas num.cohorts; number of recapture events is num.cohorts-1
 #' @param cohort.sizes a scalar giving constant size of each cohort or a vector of sizes of length num.cohorts

@@ -18,23 +18,23 @@
 #' calls create.simdesign.data to construct a default dataframe for the specified problem.
 #'
 #' For designation of models for s or p, there are 3 options here:
-#'         constant model: s=list(par=value) 
-#'         time model:     s=list(par=c(val1,val2,...valk)) where k=num.cohorts-1 is number of survival intervals
+#'         constant model: s=list(par=value)  or s=value
+#'         time model:     s=list(par=c(val1,val2,...valk)) or s=c(val1,val2,...valk) where k=num.cohorts-1 is number of survival intervals
 #'         general model:  s=list(par=c(val1,val2,...valk),formula=~yourformula)) k is number of cols in model matrix
-#' See \code{\link{simcjs}} for more details.
+#' See \code{\link{simpopan}} for more details.
 #' 
 #' @param num.cohorts  number of cohorts; design is square with same number of c-r eventsas num.cohorts; number of recapture events is num.cohorts-1
 #' @param cohort.sizes a scalar giving constant size of each cohort or a vector of sizes of length num.cohorts
-#' @param s a list defining the survival model with the following elements (see details)
+#' @param s a list or vector defining the survival model with the following elements (see details)
 #'                    par      - a vector of parameter values
 #'                    formula  - a formula to use with design.data to construct model
 #'                    link     - link function used with model to create probabilites (not used at present)
-#' @param p a list defining the capture probability model (same structure as s)
-#' @param r a list defining the recovery probability model (same structure as s)
-#' @param R a list defining the resight probability model for survivors (same structure as s)
-#' @param Rprime a list defining the resight probability model for non-survivors (same structure as s)
-#' @param F a list defining the model of fidelity to capture region (same structure as s)
-#' @param Fprime a list defining the model of fidelity of returning to capture region model (same structure as s)
+#' @param p a list or vector defining the capture probability model (same structure as s)
+#' @param r a list or vector defining the recovery probability model (same structure as s)
+#' @param R a list or vector defining the resight probability model for survivors (same structure as s)
+#' @param Rprime a list or vector defining the resight probability model for non-survivors (same structure as s)
+#' @param F a list or vector defining the model of fidelity to capture region (same structure as s)
+#' @param Fprime a list or vector defining the model of fidelity of returning to capture region model (same structure as s)
 #' @param design.data a dataframe with design data that allows model construction for probabilities (see details).
 #' @param outfile prefix name of the output file for the ch data. extension .inp is always added for MARK
 #' @export simbarker
