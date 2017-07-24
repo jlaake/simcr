@@ -54,6 +54,7 @@
 #' indexed by time at beginning of interval 1 for interal 1 to 2 and capture probabilities by
 #' time of occasion.  Since these are truly recapture probabilities it starts with occasion 2, so
 #' p=list(par=c(1,0.3),formula=~time) would give values: p2=0.832, p3=0.870
+#' 
 #
 #' @param num.cohorts  number of cohorts; design is square with same number of c-r events as num.cohorts; number of recapture events is num.cohorts-1
 #' @param cohort.sizes a scalar giving constant size of each cohort or a vector of sizes of length num.cohorts
